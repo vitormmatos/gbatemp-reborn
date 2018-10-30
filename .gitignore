@@ -1,0 +1,15 @@
+# Mac OSX Finder files.
+**/.DS_Store
+.DS_Store
+
+# Node Files
+dist/
+node_modules/
+npm-debug.log*
+yarn-error.log*
+
+# Rust Files
+*.o
+
+# Misc
+tmp/
