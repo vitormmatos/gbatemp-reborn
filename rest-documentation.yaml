@@ -1,0 +1,681 @@
+# This is a documentation of how the REST API of project will work.
+# For better visualizing it copy this and paste on https://editor.swagger.io/
+
+openapi: 3.0.2
+servers:
+  - url: '{scheme}://gbatemp.io/'
+    variables:
+      scheme:
+        description: The Data Set API is accessible via https and http
+        enum:
+          - https
+          - http
+        default: http
+info:
+  description: 'GBATemp Reborn is a project to recreate the known and loved
+  GBATemp from ground zero. The goal is to create a modern, lightweight and
+  elegant forum, that fit all devices,that eventually will substitute the
+  original GBATemp.'
+  version: 1.0.0
+  title: GBATemp Reborn
+  contact:
+    email: vitor.matos@sempreceub.com
+  license:
+    name: GPL 3.0
+    url: 'https://www.gnu.org/licenses/gpl-3.0.html'
+tags:
+  - name: GBATemp
+    description: Independent Gaming Community
+    externalDocs:
+      description: Original site
+      url: 'http://gbatemp.net'
+paths:
+  /user:
+    post:
+      tags:
+        - user
+      summary: Create user
+      description: This can only be done by the logged in user.
+      operationId: createUser
+      responses:
+        '200':
+          description: successful operation
+        '400':
+          description: User with this username or email already exists
+        '503':
+          description: Database error
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+        description: Created user object
+        required: true
+  /user/createWithArray:
+    post:
+      tags:
+        - user
+      summary: Creates list of users with given input array
+      description: ''
+      operationId: createUsersWithArrayInput
+      responses:
+        default:
+          description: successful operation
+      requestBody:
+        $ref: '#/components/requestBodies/UserArray'
+  /user/createWithList:
+    post:
+      tags:
+        - user
+      summary: Creates list of users with given input array
+      description: ''
+      operationId: createUsersWithListInput
+      responses:
+        default:
+          description: successful operation
+      requestBody:
+        $ref: '#/components/requestBodies/UserArray'
+  /user/login:
+    put:
+      tags:
+        - user
+      summary: Logs user into the system
+      description: ''
+      operationId: loginUser
+      parameters:
+        - name: username
+          in: query
+          description: The user name for login
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: successful operation
+          headers:
+            X-Rate-Limit:
+              description: calls per hour allowed by the user
+              schema:
+                type: integer
+                format: int32
+            X-Expires-After:
+              description: date in UTC when token expires
+              schema:
+                type: string
+                format: date-time
+          content:
+            application/xml:
+              schema:
+                type: string
+            application/json:
+              schema:
+                type: string
+        '400':
+          description: Invalid username/password supplied
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: string
+        description: The password for login in clear text
+        required: true
+  /user/logout:
+    get:
+      tags:
+        - user
+      summary: Logs out current logged in user session
+      description: ''
+      operationId: logoutUser
+      responses:
+        default:
+          description: successful operation
+  /user/:
+    get:
+      tags:
+        - user
+      summary: List all Users
+      description: ''
+      operationId: list
+      parameters:
+        - name: adminUsername
+          in: query
+          description: The username of the  admin
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/xml:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+        '400':
+          description: Invalid username supplied
+        '403':
+          description: Don't have access rights
+        '404':
+          description: User not found
+  '/user/{username}':
+    get:
+      tags:
+        - user
+      summary: Get user by user name
+      description: ''
+      operationId: getUserByName
+      parameters:
+        - name: username
+          in: path
+          description: 'The name that needs to be fetched. Use user1 for
+          testing.'
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/User'
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          description: Invalid username supplied
+        '404':
+          description: User not found
+    put:
+      tags:
+        - user
+      summary: Updated user
+      description: This can only be done by the logged in user.
+      operationId: updateUser
+      parameters:
+        - name: username
+          in: path
+          description: name that need to be updated
+          required: true
+          schema:
+            type: string
+      responses:
+        '400':
+          description: Invalid user supplied
+        '404':
+          description: User not found
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+        description: Updated user object
+        required: true
+    delete:
+      tags:
+        - user
+      summary: Delete user
+      description: This can only be done by the logged in user.
+      operationId: deleteUser
+      parameters:
+        - name: username
+          in: path
+          description: The name that needs to be deleted
+          required: true
+          schema:
+            type: string
+      responses:
+        '400':
+          description: Invalid username supplied
+        '404':
+          description: User not found
+  /admin:
+    post:
+      tags:
+        - admin
+      summary: Create admin
+      description: This can only be done by the someone who is already an admin
+      operationId: createAdmin
+      responses:
+        default:
+          description: 'successful operation, admin created'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                promoter:
+                  type: object
+                  properties:
+                    username:
+                      type: string
+                    password:
+                      type: string
+                promoted:
+                  type: object
+                  properties:
+                    username:
+                      type: string
+                    password:
+                      type: string
+                adminModel:
+                  $ref: '#/components/schemas/Admin'
+        description: The promotion of a user
+        required: true
+  /admin/list:
+    get:
+      tags:
+        - admin
+      summary: List admins
+      description: 'A list with all admins usernames, shall be used for reports'
+      responses:
+        '200':
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  type: string
+  /timeline:
+    post:
+      tags:
+        - timeline
+      summary: Create timeline
+      operationId: createTimeline
+      description: This can only be done by a former staff
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid username supplied
+        '403':
+          description: Don't have access rights
+        '404':
+          description: User not found
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                timeline:
+                  $ref: '#/components/schemas/Timeline'
+                formerStaffInfo:
+                  type: object
+                  properties:
+                    username:
+                      type: string
+                    password:
+                      type: string
+        required: true
+  /forum:
+    post:
+      tags:
+        - forum
+      summary: Create forum
+      operationId: createForum
+      description: This can only be done by a former staff
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid username supplied
+        '403':
+          description: Don't have access rights
+        '404':
+          description: User not found
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                forum:
+                  $ref: '#/components/schemas/Forum'
+                formerStaffInfo:
+                  type: object
+                  properties:
+                    username:
+                      type: string
+                    password:
+                      type: string
+        required: true
+  /categories:
+    post:
+      tags:
+        - categories
+      summary: Create category
+      operationId: createCategory
+      description: This can only be done by a former staff
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid username
+        '403':
+          description: Only admins can do that
+        '404':
+          description: User not found
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                categories:
+                  $ref: '#/components/schemas/Categories'
+                formerStaffInfo:
+                  type: object
+                  properties:
+                    username:
+                      type: string
+                    password:
+                      type: string
+        required: true
+  /section:
+    post:
+      tags:
+        - section
+      summary: Create section
+      operationId: createSection
+      description: This can only be done by a former staff
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid username
+        '403':
+          description: Only admins can do that
+        '404':
+          description: User not found
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                section:
+                  $ref: '#/components/schemas/Section'
+                formerStaffInfo:
+                  type: object
+                  properties:
+                    username:
+                      type: string
+                    password:
+                      type: string
+        required: true
+  /thread:
+    post:
+      tags:
+        - thread
+      summary: Create thread
+      operationId: createThread
+      description: Every user can do create a thread
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid username supplied
+        '403':
+          description: Your thread is not within GBATemp rules
+        '404':
+          description: User not found
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                timeline:
+                  $ref: '#/components/schemas/Thread'
+                userInfo:
+                  type: object
+                  properties:
+                    username:
+                      type: string
+                    password:
+                      type: string
+        required: true
+  /post:
+    post:
+      tags:
+        - post
+      summary: Create post
+      operationId: createPost
+      description: Every user can do create a post
+      responses:
+        '200':
+          description: OK
+        '403':
+          description: Your post is not within GBATemp rules
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                post:
+                  $ref: '#/components/schemas/Post'
+        required: true
+  /message:
+    post:
+      tags:
+        - message
+      summary: Create message
+      operationId: createMessage
+      description: Every user message other user(s)
+      responses:
+        '200':
+          description: OK
+        '403':
+          description: 'Your post is not within GBATemp rules, so it shall not
+          be created'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                post:
+                  $ref: '#/components/schemas/Message'
+        required: true
+components:
+  requestBodies:
+    UserArray:
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/User'
+      description: List of user object
+      required: true
+  schemas:
+    Timeline:
+      type: array
+      items:
+        $ref: '#/components/schemas/Post'
+      xml:
+        name: Timeline
+    Forum:
+      type: array
+      items:
+        $ref: '#/components/schemas/Categories'
+      xml:
+        name: Forum
+    Categories:
+      type: object
+      properties:
+        Title:
+          type: string
+        Sections:
+          type: array
+          items:
+            $ref: '#/components/schemas/Section'
+      xml:
+        name: Categories
+    Section:
+      type: object
+      properties:
+        Title:
+          type: string
+        Threads:
+          type: array
+          items:
+            $ref: '#/components/schemas/Thread'
+      xml:
+        name: Section
+    Thread:
+      type: object
+      properties:
+        Id:
+          type: number
+        Views:
+          type: number
+        Title:
+          type: string
+        DateCreated:
+          type: string
+          format: Date
+        DateUpdated:
+          type: string
+          format: Date
+      xml:
+        name: Thread
+    Post:
+      type: object
+      properties:
+        Id:
+          type: number
+        Likes:
+          type: number
+        Replies:
+          type: number
+        Content:
+          type: string
+        DateCreated:
+          type: string
+          format: Date
+        PosterUsername:
+          type: string
+        ThreadId:
+          type: number
+      xml:
+        name: Post
+    Message:
+      type: object
+      properties:
+        threadItems:
+          $ref: '#/components/schemas/Thread'
+        participants:
+          type: array
+          items:
+            type: string
+      xml:
+        name: Message
+    ThreadReport:
+      type: object
+      properties:
+        reportSenderUsername:
+          type: string
+        reportedThread:
+          $ref: '#/components/schemas/Thread'
+        description:
+          type: string
+      xml:
+        name: ThreadReport
+    PostReport:
+      type: object
+      properties:
+        reportSenderUsername:
+          type: string
+        reportedPost:
+          $ref: '#/components/schemas/Post'
+        description:
+          type: string
+      xml:
+        name: PostReport
+    UserReport:
+      type: object
+      properties:
+        reportSenderUsername:
+          type: string
+        reportedUsername:
+          type: string
+        description:
+          type: string
+      xml:
+        name: UserReport
+    Admin:
+      type: object
+      properties:
+        userInfo:
+          $ref: '#/components/schemas/User'
+        postReports:
+          type: array
+          items:
+            $ref: '#/components/schemas/PostReport'
+        userReports:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserReport'
+        threadReports:
+          type: array
+          items:
+            $ref: '#/components/schemas/ThreadReport'
+      xml:
+        name: Admin
+    User:
+      type: object
+      properties:
+        Username:
+          type: string
+        Email:
+          type: string
+        Password:
+          type: string
+        Gender:
+          type: number
+          enum:
+            - Male
+            - Female
+        Messages:
+          type: number
+        Likes:
+          type: number
+        Notifications:
+          type: number
+        Alerts:
+          type: number
+        ProfileMessage:
+          type: string
+        DateEntered:
+          type: string
+          format: Date
+        Birthday:
+          type: string
+          format: Date
+        Patreon:
+          type: boolean
+          default: false
+        HierarchyLevel:
+          type: number
+          enum:
+            - Newcomer
+            - Member
+            - Reporter
+            - Chief Reporter
+            - Moderator
+            - Global Moderator
+            - Administrator
+            - Former Staff
+      xml:
+        name: User
